@@ -11,7 +11,7 @@ jobs:
   # БЛОК 1: Создание черновика релиза на GitHub
   # =========================================================================
   create-release: 
-    runs-on: ubuntu-20.04 # Запускаем на чистой системе Ubuntu 20.04
+    runs-on: ubuntu-latest # Запускаем на чистой системе Ubuntu 20.04
     steps:
     # Шаг 1.1: Создание самого релиза через готовый экшен ncipollo
     - name: Create Release
@@ -47,7 +47,7 @@ jobs:
         # 1. no-self-contained (зависит от установленного .NET в системе пользователя)
         # 2. self-contained (все библиотеки .NET вшиты прямо в исполняемый файл)
         sc: [no-self-contained, self-contained]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     env:
       # Глобальные переменные окружения для этого блока
       APP_NAME: coolgirl-multirom-builder-ca65
@@ -208,7 +208,7 @@ jobs:
     strategy:
       matrix:
         sc: [no-self-contained, self-contained] # Собираем обычную и независимую (.NET внутри) версии
-    runs-on: macos-13 # Разворачиваем виртуальную машину macOS 13
+    runs-on: macos-latest # Разворачиваем виртуальную машину macOS 13
     env:
       APP_NAME: coolgirl-multirom-builder-ca65
       OUTPUT_DIR: coolgirl-multirom-builder-ca65
