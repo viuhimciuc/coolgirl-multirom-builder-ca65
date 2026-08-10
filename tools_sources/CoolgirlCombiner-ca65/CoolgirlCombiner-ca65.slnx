@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Interim" />
+    <BuildType Name="Release" />
+  </Configurations>
+  <Project Path="CoolgirlCombiner-ca65.csproj" />
+</Solution>
