@@ -3,7 +3,7 @@
 # ==========================================
 # Intermediate object files, lists, and memory maps
 tools/
-#*.nes
+*.nes
 *.bin
 *.unf
 *.o
