@@ -2,7 +2,7 @@
 
 This is a toolset created based on the project [COOLGIRL Multirom Builder](https://github.com/ClusterM/coolgirl-multirom-builder). It will help create MultiROM images with a classic "9999-in-1" pirate cartridge menu for [COOLGIRL Famicom cartridges](https://github.com/ClusterM/coolgirl-famicom-multicart) (mapper 342). The resulting ROM file can be run on an emulator or written to a cartridge.
 
-![Loader menu](https://user-images.githubusercontent.com/.gif)
+![Loader menu](https://github.com/user-attachments/assets/82ab0e60-9423-4c8a-991c-c6b44c98eaf9)
 
 ## 🚀 Key Features
 
