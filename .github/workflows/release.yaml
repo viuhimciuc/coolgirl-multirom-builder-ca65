@@ -340,6 +340,14 @@ jobs:
 
     # Шаг 4.4: Создание директорий и копирование файлов. 
     # Обратите внимание: shell: msys2 {0} заставляет команду выполняться в эмулируемом Linux-терминале Bash вместо Windows PowerShell
+    - name: Copy main files
+      shell: msys2 {0}
+      run: |
+        mkdir -p ${{ env.OUTPUT_DIR }}
+        # Копируем только то, что реально существует, заглушая ошибки о недостающих файлах
+        cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
+
+    # Шаг 4.5: Сборка и установка компилятора cc65 из исходного кода
     - name: Build and install cc65 (ca65) from source
       shell: msys2 {0}
       run: |
@@ -356,16 +364,13 @@ jobs:
         cp -fR cc65/asminc /usr/share/cc65/
         cp -fR cc65/cfg /usr/share/cc65/
 
-           mkdir -p ${{ env.OUTPUT_DIR }} &&
-           cp -fR Makefile README.md configs spec demos games images src ${{ env.OUTPUT_DIR }}
-
-    # Шаг 4.5: Импорт текстового файла со ссылкой на созданный релиз из Блока 1
+    # Шаг 4.6: Импорт текстового файла со ссылкой на созданный релиз из Блока 1
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v4.1.7
       with:
         name: release_url
 
-    # Шаг 4.6: Чтение содержимого текстового файла и регистрация ссылки в глобальных параметрах текущей задачи
+    # Шаг 4.7: Чтение содержимого текстового файла и регистрация ссылки в глобальных параметрах текущей задачи
     - name: Get Release File Name & Upload URL
       id: get_release_info
       shell: msys2 {0}
@@ -373,34 +378,34 @@ jobs:
         value=`cat release_url.txt`
         echo "upload_url=$value" >> $GITHUB_OUTPUT
 
-    # Шаг 4.7: Компиляция .NET-приложения CoolgirlCombiner-ca65 под Windows x64 в целевую подпапку
+    # Шаг 4.8: Компиляция .NET-приложения CoolgirlCombiner-ca65 под Windows x64 в целевую подпапку
     - name: Build CoolgirlCombiner-ca65 for Win-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r win-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
-    # Шаг 4.8: Компиляция .NET-приложения NesTiler под Windows x64 в целевую подпапку
+    # Шаг 4.9: Компиляция .NET-приложения NesTiler под Windows x64 в целевую подпапку
     - name: Build NesTiler for Win-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/NesTiler/NesTiler -c Release -r win-x64 -o ${{ env.NESTILER_DIR }} ${{ env.SC_OPS }}
 
-    # Шаг 4.9: Очистка лишней сопроводительной документации из директорий утилит внутри MSYS2
+    # Шаг 4.10: Очистка лишней сопроводительной документации из директорий утилит внутри MSYS2
     - name: Remove unnecessary files
       shell: msys2 {0}
       run: rm -f ${{ env.COMBINER_DIR }}/*.md ${{ env.NESTILER_DIR }}/*.md
 
-    # Шаг 4.10: Запуск тестовой компиляции ROM через Make-файл проекта в окружении MSYS2
+    # Шаг 4.11: Запуск тестовой компиляции ROM через Make-файл проекта в окружении MSYS2
     - name: Test build
       shell: msys2 {0}
       run: make -C ${{ env.OUTPUT_DIR }} all
 
-    # Шаг 4.11: Удаление мусорных файлов, оставшихся после проведения теста сборки
+    # Шаг 4.12: Удаление мусорных файлов, оставшихся после проведения теста сборки
     - name: Clean
       shell: msys2 {0}
       run: make -C ${{ env.OUTPUT_DIR }} clean
 
-    # Шаг 4.12: Упаковка готовой папки проекта со всеми инструментами в .zip архив с максимальным сжатием
+    # Шаг 4.13: Упаковка готовой папки проекта со всеми инструментами в .zip архив с максимальным сжатием
     - name: Archive Windows
       env:
         CMD: zip -r9
@@ -408,7 +413,7 @@ jobs:
       run: |
         ${{ env.CMD }} ${{ env.OUTPUT_FILE }} ${{ env.OUTPUT_DIR }}
 
-    # Шаг 4.13: Передача упакованного zip-архива на страницу релиза GitHub
+    # Шаг 4.14: Передача упакованного zip-архива на страницу релиза GitHub
     - name: Upload Windows
       uses: actions/upload-release-asset@v1
       env:
