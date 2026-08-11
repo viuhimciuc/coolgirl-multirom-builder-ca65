@@ -217,7 +217,7 @@ jobs:
       OUTPUT_DIR: coolgirl-multirom-builder-ca65
       COMBINER_DIR: coolgirl-multirom-builder-ca65/tools/CoolgirlCombiner-ca65
       NESTILER_DIR: coolgirl-multirom-builder-ca65/tools/nestiler
-      OUTPUT_FILE: coolgirl-multirom-builder-ca65-osx-x64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.tar.gz
+      OUTPUT_FILE: coolgirl-multirom-builder-ca65-osx-arm64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.tar.gz
     steps:
     # Шаг 3.1: Загрузка исходного кода из Git
     - name: Checkout
@@ -261,13 +261,13 @@ jobs:
     - name: Build CoolgirlCombiner-ca65 for MacOS-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r osx-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r osx-arm64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     # Шаг 3.8: Компиляция утилиты NesTiler под архитектуру macOS x64 в изолированную папку
     - name: Build NesTiler for MacOS-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/NesTiler/NesTiler -c Release -r osx-x64 -o ${{ env.NESTILER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/NesTiler/NesTiler -c Release -r osx-arm64 -o ${{ env.NESTILER_DIR }} ${{ env.SC_OPS }}
 
     # Шаг 3.9: Удаление лишних markdown-файлов из скомпилированных папок инструментов
     - name: Remove unnecessary files
