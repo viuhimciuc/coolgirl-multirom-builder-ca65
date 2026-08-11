@@ -350,22 +350,16 @@ jobs:
         # Копируем только то, что реально существует, заглушая ошибки о недостающих файлах
         cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
-    # Шаг 4.5: Сборка и установка компилятора cc65 из исходного кода
-    - name: Build and install cc65 (ca65) from source
+        # Шаг 4.5: Быстрое скачивание готового бинарного релиза cc65 для Windows
+    - name: Download and install official cc65 binaries
       shell: msys2 {0}
       run: |
-        # Скачиваем официальный репозиторий компилятора
-        git clone --depth 1 https://github.com/cc65/cc65.git
-        # Собираем его встроенными инструментами
-        make -C cc65
-        # Переносим исполняемые файлы (включая ca65) в системную папку MSYS2
-        cp -f cc65/bin/* /usr/bin/
-        # Переносим библиотеки и заголовки, чтобы ca65 знал правила сборки NES
-        mkdir -p /usr/share/cc65/
-        cp -fR cc65/lib /usr/share/cc65/
-        cp -fR cc65/include /usr/share/cc65/
-        cp -fR cc65/asminc /usr/share/cc65/
-        cp -fR cc65/cfg /usr/share/cc65/
+        # 1. Скачиваем официальную готовую ZIP-сборку cc65 для Windows
+        wget -q https://github.com
+        # 2. Распаковываем её прямо в системные папки MSYS2
+        unzip -q -o cc65-win32-2.19.zip -d /usr/
+        # 3. На всякий случай проверяем, что ca65 теперь доступен и работает
+        ca65 --version
 
     # Шаг 4.6: Импорт текстового файла со ссылкой на созданный релиз из Блока 1
     - name: Load Release URL File from release job
