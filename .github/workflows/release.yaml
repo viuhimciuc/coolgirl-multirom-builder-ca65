@@ -350,29 +350,22 @@ jobs:
         # Копируем только то, что реально существует, заглушая ошибки о недостающих файлах
         cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
-    # Шаг 4.5: Скачивание и распаковка cc65 через встроенный PowerShell (без unzip и без tar)
+    # Шаг 4.5: Скачивание официальных бинарников cc65 через MSYS2 с установкой unzip
     - name: Download and install official cc65 binaries
+      shell: msys2 {0}
       run: |
-        # 1. Скачиваем официальный ZIP-архив cc65 для Windows
-        Invoke-WebRequest -Uri "https://github.com" -OutFile "cc65.zip"
+        # 1. Устанавливаем официальную утилиту unzip через пакетный менеджер MSYS2
+        pacman -S --noconfirm --needed unzip
         
-        # 2. Создаем временную папку и распаковываем туда архив встроенными средствами Windows
-        New-Item -ItemType Directory -Force -Path "cc65_temp"
-        Expand-Archive -Path "cc65.zip" -DestinationPath "cc65_temp" -Force
+        # 2. Скачиваем готовую сборку cc65 для Windows
+        wget -q https://github.com
         
-        # 3. Переносим исполняемые файлы в системную папку MSYS2, чтобы они были доступны в консоли
-        # Сначала создаем целевые папки в MSYS2, если их вдруг нет
-        New-Item -ItemType Directory -Force -Path "C:\msys64\usr\bin"
-        New-Item -ItemType Directory -Force -Path "C:\msys64\usr\share\cc65"
+        # 3. Теперь unzip гарантированно сработает и распакует всё в системную папку /usr/
+        unzip -q -o cc65-win32-2.19.zip -d /usr/
         
-        # Копируем бинарники (ca65.exe, ld65.exe и т.д.)
-        Copy-Item -Path "cc65_temp\bin\*" -Destination "C:\msys64\usr\bin\" -Force
-        
-        # Копируем библиотеки, конфиги и заголовки, чтобы ca65 знал архитектуру NES
-        Copy-Item -Path "cc65_temp\lib" -Destination "C:\msys64\usr\share\cc65\" -Recurse -Force
-        Copy-Item -Path "cc65_temp\include" -Destination "C:\msys64\usr\share\cc65\" -Recurse -Force
-        Copy-Item -Path "cc65_temp\asminc" -Destination "C:\msys64\usr\share\cc65\" -Recurse -Force
-        Copy-Item -Path "cc65_temp\cfg" -Destination "C:\msys64\usr\share\cc65\" -Recurse -Force
+        # 4. Проверяем, что ca65 успешно работает в терминале Windows
+        ca65 --version
+
 
     # Шаг 4.6: Импорт текстового файла со ссылкой на созданный релиз из Блока 1
     - name: Load Release URL File from release job
