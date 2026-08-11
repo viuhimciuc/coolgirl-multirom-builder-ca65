@@ -83,7 +83,7 @@ jobs:
     - name: Copy main files
       run: >-
            mkdir -p ${{ env.OUTPUT_DIR }} &&
-           cp -fR *.asm Makefile LICENSE README.md configs spec demos games images footer.* ${{ env.OUTPUT_DIR }}
+           cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
     # Шаг 2.6: Скачивание текстового файла с URL-адресом релиза, созданного в Блоке 1
     - name: Load Release URL File from release job
@@ -236,7 +236,7 @@ jobs:
     - name: Copy main files
       run: >-
            mkdir -p ${{ env.OUTPUT_DIR }} &&
-           cp -fR *.asm Makefile LICENSE README.md configs spec demos games images footer.* ${{ env.OUTPUT_DIR }}
+           cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
     # Шаг 3.5: Скачивание текстового файла с сохраненной ссылкой на текущий релиз
     - name: Load Release URL File from release job
@@ -338,7 +338,7 @@ jobs:
       shell: msys2 {0}
       run: >-
            mkdir -p ${{ env.OUTPUT_DIR }} &&
-           cp -fR *.asm Makefile LICENSE README.md configs spec demos games images footer.* *.bat ${{ env.OUTPUT_DIR }} # На Windows копируем также файлы .bat
+           cp -fR Makefile README.md configs spec demos games images src ${{ env.OUTPUT_DIR }}
 
     # Шаг 4.5: Импорт текстового файла со ссылкой на созданный релиз из Блока 1
     - name: Load Release URL File from release job
