@@ -357,7 +357,7 @@ jobs:
         # 1. Скачиваем официальную готовую ZIP-сборку cc65 для Windows
         wget -q https://github.com
         # 2. Распаковываем её прямо в системные папки MSYS2
-        unzip -q -o cc65-win32-2.19.zip -d /usr/
+        tar -xf cc65-win32-2.19.zip -C /usr/
         # 3. На всякий случай проверяем, что ca65 теперь доступен и работает
         ca65 --version
 
