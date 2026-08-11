@@ -337,13 +337,25 @@ jobs:
           git
           libargp-devel
           zip
-          cc65
 
     # Шаг 4.4: Создание директорий и копирование файлов. 
     # Обратите внимание: shell: msys2 {0} заставляет команду выполняться в эмулируемом Linux-терминале Bash вместо Windows PowerShell
-    - name: Copy main files
+    - name: Build and install cc65 (ca65) from source
       shell: msys2 {0}
-      run: >-
+      run: |
+        # Скачиваем официальный репозиторий компилятора
+        git clone --depth 1 https://github.com/cc65/cc65.git
+        # Собираем его встроенными инструментами
+        make -C cc65
+        # Переносим исполняемые файлы (включая ca65) в системную папку MSYS2
+        cp -f cc65/bin/* /usr/bin/
+        # Переносим библиотеки и заголовки, чтобы ca65 знал правила сборки NES
+        mkdir -p /usr/share/cc65/
+        cp -fR cc65/lib /usr/share/cc65/
+        cp -fR cc65/include /usr/share/cc65/
+        cp -fR cc65/asminc /usr/share/cc65/
+        cp -fR cc65/cfg /usr/share/cc65/
+
            mkdir -p ${{ env.OUTPUT_DIR }} &&
            cp -fR Makefile README.md configs spec demos games images src ${{ env.OUTPUT_DIR }}
 
