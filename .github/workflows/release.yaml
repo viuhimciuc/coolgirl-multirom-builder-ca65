@@ -376,7 +376,7 @@ jobs:
     # Шаг 4.7: Компиляция .NET-приложения CoolgirlCombiner-ca65 под Windows x64 в целевую подпапку
     - name: Build CoolgirlCombiner-ca65 for Win-x64
       env:
-        SC_OPS: ${{ matrix.sc == 'self-contained' && '--contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
+        SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r win-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     # Шаг 4.8: Компиляция .NET-приложения NesTiler под Windows x64 в целевую подпапку
