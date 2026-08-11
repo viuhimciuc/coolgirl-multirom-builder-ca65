@@ -103,7 +103,7 @@ jobs:
       env:
         # Если матрица = self-contained, добавляем флаги вшивания библиотек и отключаем обрезку кода
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/CoolgirlCombiner -c Release -r linux-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r linux-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     - name: Build NesTiler for Linux-x64
       env:
@@ -142,7 +142,7 @@ jobs:
     - name: Build CoolgirlCombiner-ca65 for Linux-ARM32
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/CoolgirlCombiner -c Release -r linux-arm -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r linux-arm -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     - name: Build NesTiler for Linux-ARM32
       env:
@@ -175,7 +175,7 @@ jobs:
     - name: Build CoolgirlCombiner-ca65 for Linux-ARM64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/CoolgirlCombiner -c Release -r linux-arm64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r linux-arm64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     - name: Build NesTiler for Linux-ARM64
       env:
@@ -255,7 +255,7 @@ jobs:
     - name: Build CoolgirlCombiner-ca65 for MacOS-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/CoolgirlCombiner -c Release -r osx-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r osx-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     # Шаг 3.8: Компиляция утилиты NesTiler под архитектуру macOS x64 в изолированную папку
     - name: Build NesTiler for MacOS-x64
@@ -358,7 +358,7 @@ jobs:
     - name: Build CoolgirlCombiner-ca65 for Win-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
-      run: dotnet publish tools_sources/CoolgirlCombiner -c Release -r win-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
+      run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r win-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
     # Шаг 4.8: Компиляция .NET-приложения NesTiler под Windows x64 в целевую подпапку
     - name: Build NesTiler for Win-x64
