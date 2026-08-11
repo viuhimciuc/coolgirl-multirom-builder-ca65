@@ -75,9 +75,12 @@ jobs:
     - name: apt-get update
       run: sudo apt-get update
 
-    # Шаг 2.4: Установка кросс-компиляторов GCC для сборки под архитектуры ARM (32 и 64 бит)
+    # Шаг 2.4: Установка кросс-компиляторов GCC для сборки под архитектуры ARM (32 и 64 бит) и компилятора cc65 (ca65) для сборки под 8-битные процессоры
     - name: Get ARM toolchain
       run: sudo apt-get install gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu
+
+    - name: Install cc65 compiler (ca65)
+      run: sudo apt-get install -y cc65
 
     # Шаг 2.5: Создание папки релиза и копирование туда основных скриптов, ассмеблеров и документации
     - name: Copy main files
@@ -228,9 +231,12 @@ jobs:
       with:
         dotnet-version: 6.0.x
 
-    # Шаг 3.3: Установка библиотеки argp для macOS через пакетный менеджер Homebrew
+    # Шаг 3.3: Установка библиотеки argp для macOS через пакетный менеджер Homebrew, необходимой для работы компилятора cc65 (ca65)
     - name: Setup argp
       run: brew install argp-standalone
+    
+    - name: Install cc65 compiler (ca65)
+      run: brew install cc65
 
     # Шаг 3.4: Создание директории назначения и копирование ключевых исходников проекта
     - name: Copy main files
@@ -331,6 +337,7 @@ jobs:
           git
           libargp-devel
           zip
+          cc65
 
     # Шаг 4.4: Создание директорий и копирование файлов. 
     # Обратите внимание: shell: msys2 {0} заставляет команду выполняться в эмулируемом Linux-терминале Bash вместо Windows PowerShell
