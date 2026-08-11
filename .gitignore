@@ -5,6 +5,8 @@
 tools/
 *.nes
 *.bin
+# EXCEPTION: Allow Git to see any .bin files inside sound folders
+!src/sound/**/*.bin
 *.unf
 *.o
 *.obj
