@@ -1,38 +1,38 @@
-# Имя автоматизации, отображаемое во вкладке Actions на GitHub
+# Automation name displayed in the Actions tab on GitHub
 name: Release
 
-# Настройка триггера запуска. 
-# workflow_dispatch означает, что процесс запускается вручную кнопкой из веб-интерфейса GitHub
+# Trigger configuration.
+# workflow_dispatch means the process is launched manually via a button in the GitHub web interface
 on:
   workflow_dispatch:
 
 jobs:
     # =========================================================================
-  # БЛОК 1: Создание или обновление черновика релиза на GitHub (Вариант Б)
+  # BLOCK 1: Create or update a draft release on GitHub (Option B)
   # =========================================================================
   create-release: 
-    runs-on: ubuntu-latest # Запускаем на актуальной версии операционной системы Ubuntu Linux
+    runs-on: ubuntu-latest # Run on the latest version of Ubuntu Linux
     steps:
     - name: Create or Update Release
-      id: create_release # Уникальный ID шага, чтобы другие задачи ниже могли получить ссылку на релиз
-      uses: ncipollo/release-action@v1 # Используем готовый официальный плагин для работы с релизами
+      id: create_release # Unique step ID so other tasks below can access the release link
+      uses: ncipollo/release-action@v1 # Use the official plugin for working with releases
       with:
-        token: ${{ secrets.GITHUB_TOKEN }} # Автоматический секретный ключ GitHub для получения прав на запись в репозиторий
-        tag: ${{ github.event.repository.updated_at }} # Тег версии релиза (использует дату и время последнего обновления кода)
-        commit: ${{ github.head_ref || github.ref_name }} # Указывает ветку Git, к которой будет привязан этот релиз
-        name: Release ${{ github.event.repository.updated_at }} # Текстовое название релиза, которое увидят пользователи на GitHub
-        draft: true # Создавать релиз в режиме «Черновик» (скрыт от обычных пользователей, пока вы его не опубликуете)
+        token: ${{ secrets.GITHUB_TOKEN }} # Automatic GitHub secret key for write access to the repository
+        tag: ${{ github.event.repository.updated_at }} # Release version tag (uses the date/time of the last code update)
+        commit: ${{ github.head_ref || github.ref_name }} # Specifies the Git branch to which this release will be linked
+        name: Release ${{ github.event.repository.updated_at }} # Text name of the release visible to users on GitHub
+        draft: true # Create the release as a “Draft” (hidden from regular users until published)
         
-        # --- НАСТРОЙКИ АВТО-ОБНОВЛЕНИЯ (ВАРИАНТ Б) ---
-        allowUpdates: true # РАЗРЕШИТЬ ОБНОВЛЕНИЕ: Если релиз с таким тегом уже существует, скрипт не упадет, а откроет его для редактирования
-        removeArtifacts: true # ОЧИСТКА СТАРЫХ ФАЙЛОВ: Перед загрузкой новых собранных программ, плагин полностью удалит старые архивы из этого черновика
+        # --- AUTO-UPDATE SETTINGS (OPTION B) ---
+        allowUpdates: true # ALLOW UPDATES: If a release with this tag already exists, the script will open it for editing instead of failing
+        removeArtifacts: true # REMOVE OLD FILES: Before uploading new builds, the plugin will delete old archives from this draft
 
-    # Шаг 1.2: Сохраняем уникальный URL-адрес для загрузки файлов в текстовый файл
+    # Step 1.2: Save the unique upload URL into a text file
     - name: Output Release URL File
       run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
 
-    # Шаг 1.3: Загружаем этот файл во временное хранилище GitHub Artifacts.
-    # Это необходимо, чтобы другие независимые блоки (jobs) ниже могли прочитать этот URL.
+    # Step 1.3: Upload this file to GitHub Artifacts.
+    # This is required so other independent jobs below can read this URL.
     - name: Save Release URL File for publish
       uses: actions/upload-artifact@v4
       with:
@@ -40,74 +40,74 @@ jobs:
         path: release_url.txt
 
   # =========================================================================
-  # БЛОК 2: Сборка проекта под Linux (x64, ARM32, ARM64)
+  # BLOCK 2: Build the project for Linux (x64, ARM32, ARM64)
   # =========================================================================
   build-linux:
-    needs: create-release # Этот блок не начнется, пока успешно не завершится Блок 1
+    needs: create-release # This block will not start until Block 1 completes successfully
     strategy:
       matrix:
-        # Матрица сборки: проект соберется два раза. 
-        # 1. no-self-contained (зависит от установленного .NET в системе пользователя)
-        # 2. self-contained (все библиотеки .NET вшиты прямо в исполняемый файл)
+        # Build matrix: the project will be built twice.
+        # 1. no-self-contained (depends on .NET installed on the user's system)
+        # 2. self-contained (all .NET libraries embedded directly into the executable)
         sc: [no-self-contained, self-contained]
     runs-on: ubuntu-latest
     env:
-      # Глобальные переменные окружения для этого блока
+      # Global environment variables for this block
       APP_NAME: coolgirl-multirom-builder-ca65
       OUTPUT_DIR: coolgirl-multirom-builder-ca65
-      COMBINER_DIR: coolgirl-multirom-builder-ca65/tools/CoolgirlCombiner-ca65 # Папка для Combiner
-      NESTILER_DIR: coolgirl-multirom-builder-ca65/tools/nestiler # Папка для NesTiler
-      # Имена итоговых архивов в зависимости от режима сборки из матрицы
+      COMBINER_DIR: coolgirl-multirom-builder-ca65/tools/CoolgirlCombiner-ca65 # Folder for Combiner
+      NESTILER_DIR: coolgirl-multirom-builder-ca65/tools/nestiler # Folder for NesTiler
+      # Final archive names depending on the matrix mode
       OUTPUT_FILE_X64: coolgirl-multirom-builder-ca65-linux-x64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.tar.gz
       OUTPUT_FILE_ARM32: coolgirl-multirom-builder-ca65-linux-arm32${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.tar.gz
       OUTPUT_FILE_ARM64: coolgirl-multirom-builder-ca65-linux-arm64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.tar.gz
     steps:
-    # Шаг 2.1: Скачивание исходного кода вашего репозитория
+    # Step 2.1: Download repository source code
     - name: Checkout
       uses: actions/checkout@v3
       with:
-        submodules: true # Скачиваем также вложенные подмодули (submodules), если они есть
+        submodules: true # Also download submodules if present
 
-    # Шаг 2.2: Установка окружения .NET SDK версии 6.0
+    # Step 2.2: Install .NET SDK version 6.0
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
-    # Шаг 2.3: Обновление пакетного менеджера Ubuntu
+    # Step 2.3: Update Ubuntu package manager
     - name: apt-get update
       run: sudo apt-get update
 
-    # Шаг 2.4: Установка кросс-компиляторов GCC для сборки под архитектуры ARM (32 и 64 бит) и компилятора cc65 (ca65) для сборки под 8-битные процессоры
+    # Step 2.4: Install GCC cross-compilers for ARM (32/64-bit) and cc65 (ca65) compiler for 8-bit CPUs
     - name: Get ARM toolchain
       run: sudo apt-get install gcc-arm-linux-gnueabihf gcc-aarch64-linux-gnu
 
     - name: Install cc65 compiler (ca65)
       run: sudo apt-get install -y cc65
 
-    # Шаг 2.5: Создание папки релиза и копирование туда основных скриптов, ассмеблеров и документации
+    # Step 2.5: Create release folder and copy main scripts, assemblers, and documentation
     - name: Copy main files
       run: >-
            mkdir -p ${{ env.OUTPUT_DIR }} &&
            cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
-    # Шаг 2.6: Скачивание текстового файла с URL-адресом релиза, созданного в Блоке 1
+    # Step 2.6: Download the text file with the release URL created in Block 1
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v4.1.7
       with:
         name: release_url
 
-    # Шаг 2.7: Извлечение URL-адреса из файла и экспорт его в переменную этого шага
+    # Step 2.7: Extract the URL and export it as a variable for this step
     - name: Get Release File Name & Upload URL
       id: get_release_info
       run: |
         value=`cat release_url.txt`
         echo upload_url=$value >> $GITHUB_OUTPUT
 
-    # --- Подсекция Linux: Сборка утилит для x64 архитектуры ---
+    # --- Linux subsection: Build utilities for x64 architecture ---
     - name: Build CoolgirlCombiner-ca65 for Linux-x64
       env:
-        # Если матрица = self-contained, добавляем флаги вшивания библиотек и отключаем обрезку кода
+        # If matrix = self-contained, add flags to embed libraries and disable trimming
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r linux-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
@@ -117,22 +117,22 @@ jobs:
       run: dotnet publish tools_sources/NesTiler/NesTiler -c Release -r linux-x64 -o ${{ env.NESTILER_DIR }} ${{ env.SC_OPS }}
 
     - name: Remove unnecessary files
-      run: rm -f ${{ env.COMBINER_DIR }}/*.md ${{ env.NESTILER_DIR }}/*.md # Удаляем лишние .md из папок инструментов
+      run: rm -f ${{ env.COMBINER_DIR }}/*.md ${{ env.NESTILER_DIR }}/*.md # Remove extra .md files from tool folders
 
     - name: Test build
-      run: make -C ${{ env.OUTPUT_DIR }} all # Запуск теста сборки через Makefile проекта
+      run: make -C ${{ env.OUTPUT_DIR }} all # Run test build via project Makefile
 
     - name: Clean build files
-      run: make -C ${{ env.OUTPUT_DIR }} clean # Очистка результатов теста, чтобы архивировать чистый проект
+      run: make -C ${{ env.OUTPUT_DIR }} clean # Clean test results before archiving
 
     - name: Archive Linux-x64
       env:
-        CMD: tar -czvf # Команда создания сжатого tar.gz архива
+        CMD: tar -czvf # Command to create tar.gz archive
       run: |
         ${{ env.CMD }} ${{ env.OUTPUT_FILE_X64 }} ${{ env.OUTPUT_DIR }}
 
     - name: Upload Linux-x64
-      uses: actions/upload-release-asset@v1 # Загрузка готового Linux-x64 архива на страницу релиза GitHub
+      uses: actions/upload-release-asset@v1 # Upload ready Linux-x64 archive to GitHub release page
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -142,9 +142,9 @@ jobs:
         asset_content_type: tar.gz
 
     - name: Clean directories
-      run: rm -rf ${{ env.COMBINER_DIR }}/* ${{ env.NESTILER_DIR }}/* # Очищаем папки утилит перед сборкой следующей архитектуры (ARM)
+      run: rm -rf ${{ env.COMBINER_DIR }}/* ${{ env.NESTILER_DIR }}/* # Clean tool folders before next architecture build
 
-    # --- Подсекция Linux: Сборка утилит для ARM32 архитектуры ---
+    # --- Linux subsection: Build utilities for ARM32 architecture ---
     - name: Build CoolgirlCombiner-ca65 for Linux-ARM32
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
@@ -177,7 +177,7 @@ jobs:
     - name: Clean directories
       run: rm -rf ${{ env.COMBINER_DIR }}/* ${{ env.NESTILER_DIR }}/*
 
-    # --- Подсекция Linux: Сборка утилит для ARM64 архитектуры ---
+    # --- Linux subsection: Build utilities for ARM64 architecture ---
     - name: Build CoolgirlCombiner-ca65 for Linux-ARM64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
@@ -206,15 +206,16 @@ jobs:
         asset_path: ${{ env.OUTPUT_FILE_ARM64 }}
         asset_name: ${{ env.OUTPUT_FILE_ARM64 }}
         asset_content_type: tar.gz
+
   # =========================================================================
-  # БЛОК 3: Сборка проекта под macOS (Apple / Intel)
+  # BLOCK 3: Build the project for macOS (Apple / Intel)
   # =========================================================================
   build-macos:
-    needs: create-release # Ждем успешного завершения Блока 1 (создания релиза)
+    needs: create-release # Wait for successful completion of Block 1
     strategy:
       matrix:
-        sc: [no-self-contained, self-contained] # Собираем обычную и независимую (.NET внутри) версии
-    runs-on: macos-latest # Разворачиваем виртуальную машину macOS 13
+        sc: [no-self-contained, self-contained] # Build both normal and standalone (.NET included) versions
+    runs-on: macos-latest # Launch macOS 13 virtual machine
     env:
       APP_NAME: coolgirl-multirom-builder-ca65
       OUTPUT_DIR: coolgirl-multirom-builder-ca65
@@ -222,76 +223,76 @@ jobs:
       NESTILER_DIR: coolgirl-multirom-builder-ca65/tools/nestiler
       OUTPUT_FILE: coolgirl-multirom-builder-ca65-osx-arm64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.tar.gz
     steps:
-    # Шаг 3.1: Загрузка исходного кода из Git
+    # Step 3.1: Download source code from Git
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: true
 
-    # Шаг 3.2: Конфигурация среды выполнения .NET 6.0 SDK
+    # Step 3.2: Configure .NET 6.0 SDK runtime
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
-    # Шаг 3.3: Установка библиотеки argp для macOS через пакетный менеджер Homebrew, необходимой для работы компилятора cc65 (ca65)
+    # Step 3.3: Install argp library for macOS via Homebrew, required for cc65 (ca65)
     - name: Setup argp
       run: brew install argp-standalone
     
     - name: Install cc65 compiler (ca65)
       run: brew install cc65
 
-    # Шаг 3.4: Создание директории назначения и копирование ключевых исходников проекта
+    # Step 3.4: Create destination directory and copy key project sources
     - name: Copy main files
       run: >-
            mkdir -p ${{ env.OUTPUT_DIR }} &&
            cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
-    # Шаг 3.5: Скачивание текстового файла с сохраненной ссылкой на текущий релиз
+    # Step 3.5: Download the text file with the saved release link
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v4.1.7
       with:
         name: release_url
 
-    # Шаг 3.6: Извлечение ссылки на релиз в системную переменную шага для последующего Upload
+    # Step 3.6: Extract the release link into a variable for later upload
     - name: Get Release File Name & Upload URL
       id: get_release_info
       run: |
         value=`cat release_url.txt`
         echo upload_url=$value >> $GITHUB_OUTPUT
 
-    # Шаг 3.7: Компиляция утилиты CoolgirlCombiner-ca65 под архитектуру macOS x64 в изолированную папку
+    # Step 3.7: Compile CoolgirlCombiner-ca65 for macOS x64 into an isolated folder
     - name: Build CoolgirlCombiner-ca65 for MacOS-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r osx-arm64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
-    # Шаг 3.8: Компиляция утилиты NesTiler под архитектуру macOS x64 в изолированную папку
+    # Step 3.8: Compile NesTiler for macOS x64 into an isolated folder
     - name: Build NesTiler for MacOS-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/NesTiler/NesTiler -c Release -r osx-arm64 -o ${{ env.NESTILER_DIR }} ${{ env.SC_OPS }}
 
-    # Шаг 3.9: Удаление лишних markdown-файлов из скомпилированных папок инструментов
+    # Step 3.9: Remove unnecessary markdown files from tool directories
     - name: Remove unnecessary files
       run: rm -f ${{ env.COMBINER_DIR }}/*.md ${{ env.NESTILER_DIR }}/*.md
 
-    # Шаг 3.10: Запуск тестовой компиляции проекта через Makefile, чтобы проверить работоспособность сборщика
+    # Step 3.10: Run test compilation via Makefile to verify build functionality
     - name: Test build
       run: make -C ${{ env.OUTPUT_DIR }} all
 
-    # Шаг 3.11: Удаление временных файлов теста, оставляя архитектуру чистой перед упаковкой
+    # Step 3.11: Remove temporary test files, leaving a clean structure for packaging
     - name: Clean
       run: make -C ${{ env.OUTPUT_DIR }} clean
 
-    # Шаг 3.12: Создание сжатого .tar.gz архива с готовой сборкой для macOS
+    # Step 3.12: Create compressed .tar.gz archive with the macOS build
     - name: Archive MacOS
       env:
         CMD: tar -czvf
       run: |
         ${{ env.CMD }} ${{ env.OUTPUT_FILE }} ${{ env.OUTPUT_DIR }}
 
-    # Шаг 3.13: Выгрузка готового tar.gz архива на страницу релизов в GitHub
+    # Step 3.13: Upload the ready tar.gz archive to GitHub release page
     - name: Upload MacOS
       uses: actions/upload-release-asset@v1
       env:
@@ -301,35 +302,36 @@ jobs:
         asset_path: ${{ env.OUTPUT_FILE }}
         asset_name: ${{ env.OUTPUT_FILE }}
         asset_content_type: tar.gz
+
   # =========================================================================
-  # БЛОК 4: Сборка проекта под Windows (x64)
+  # BLOCK 4: Build the project for Windows (x64)
   # =========================================================================
   build-windows:
-    needs: create-release # Стартует только после успешного завершения Блока 1
+    needs: create-release # Starts only after Block 1 completes successfully
     strategy:
       matrix:
-        sc: [no-self-contained, self-contained] # Двойной цикл сборки: стандартная и со встроенным .NET
-    runs-on: windows-latest # Разворачиваем чистую операционную систему Windows Server
+        sc: [no-self-contained, self-contained] # Double build cycle: standard and with embedded .NET
+    runs-on: windows-latest # Launch clean Windows Server OS
     env:
       APP_NAME: coolgirl-multirom-builder-ca65
       OUTPUT_DIR: coolgirl-multirom-builder-ca65
       COMBINER_DIR: coolgirl-multirom-builder-ca65/tools/CoolgirlCombiner-ca65
       NESTILER_DIR: coolgirl-multirom-builder-ca65/tools/nestiler
-      OUTPUT_FILE: coolgirl-multirom-builder-ca65-win-x64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.zip # Для Windows собираем привычный ZIP архив
+      OUTPUT_FILE: coolgirl-multirom-builder-ca65-win-x64${{ matrix.sc == 'self-contained' && '-self-contained' || '' }}.zip # For Windows we build a ZIP archive
     steps:
-    # Шаг 4.1: Скачивание репозитория
+    # Step 4.1: Download repository
     - name: Checkout
       uses: actions/checkout@v3
       with:
         submodules: true
 
-    # Шаг 4.2: Конфигурация .NET SDK 6.0
+    # Step 4.2: Configure .NET SDK 6.0
     - name: Setup .NET
       uses: actions/setup-dotnet@v2
       with:
         dotnet-version: 6.0.x
 
-    # Шаг 4.3: Развертывание виртуального Linux-окружения MSYS2 (нужно для работы компиляторов GCC и утилиты Make на Windows)
+    # Step 4.3: Deploy MSYS2 Linux-like environment (needed for GCC and Make on Windows)
     - name: Setup msys
       uses: msys2/setup-msys2@v2
       with:
@@ -341,39 +343,39 @@ jobs:
           libargp-devel
           zip
 
-    # Шаг 4.4: Создание директорий и копирование файлов. 
-    # Обратите внимание: shell: msys2 {0} заставляет команду выполняться в эмулируемом Linux-терминале Bash вместо Windows PowerShell
+    # Step 4.4: Create directories and copy files.
+    # Note: shell: msys2 {0} forces commands to run in MSYS2 Bash instead of Windows PowerShell
     - name: Copy main files
       shell: msys2 {0}
       run: |
         mkdir -p ${{ env.OUTPUT_DIR }}
-        # Копируем только то, что реально существует, заглушая ошибки о недостающих файлах
+        # Copy only what actually exists, suppressing errors about missing files
         cp -fR Makefile README.md configs demos games images spec src ${{ env.OUTPUT_DIR }}
 
-    # Шаг 4.5: Сборка и установка компилятора cc65 из исходного кода
+    # Step 4.5: Build and install the cc65 (ca65) compiler from source
     - name: Build and install cc65 (ca65) from source
       shell: msys2 {0}
       run: |
-        # Скачиваем официальный репозиторий компилятора
+        # Download the official compiler repository
         git clone --depth 1 https://github.com/cc65/cc65.git
-        # Собираем его встроенными инструментами
+        # Build it using built-in tools
         make -C cc65
-        # Переносим исполняемые файлы (включая ca65) в системную папку MSYS2
+        # Move executable files (including ca65) into the MSYS2 system folder
         cp -f cc65/bin/* /usr/bin/
-        # Переносим библиотеки и заголовки, чтобы ca65 знал правила сборки NES
+        # Move libraries and headers so ca65 knows NES build rules
         mkdir -p /usr/share/cc65/
         cp -fR cc65/lib /usr/share/cc65/
         cp -fR cc65/include /usr/share/cc65/
         cp -fR cc65/asminc /usr/share/cc65/
         cp -fR cc65/cfg /usr/share/cc65/
 
-    # Шаг 4.6: Импорт текстового файла со ссылкой на созданный релиз из Блока 1
+    # Step 4.6: Import the text file with the release link from Block 1
     - name: Load Release URL File from release job
       uses: actions/download-artifact@v4.1.7
       with:
         name: release_url
 
-    # Шаг 4.7: Чтение содержимого текстового файла и регистрация ссылки в глобальных параметрах текущей задачи
+    # Step 4.7: Read the text file and register the link in global parameters of this job
     - name: Get Release File Name & Upload URL
       id: get_release_info
       shell: msys2 {0}
@@ -381,34 +383,34 @@ jobs:
         value=`cat release_url.txt`
         echo "upload_url=$value" >> $GITHUB_OUTPUT
 
-    # Шаг 4.8: Компиляция .NET-приложения CoolgirlCombiner-ca65 под Windows x64 в целевую подпапку
+    # Step 4.8: Build the .NET application CoolgirlCombiner-ca65 for Windows x64 into the target subfolder
     - name: Build CoolgirlCombiner-ca65 for Win-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/CoolgirlCombiner-ca65 -c Release -r win-x64 -o ${{ env.COMBINER_DIR }} ${{ env.SC_OPS }}
 
-    # Шаг 4.9: Компиляция .NET-приложения NesTiler под Windows x64 в целевую подпапку
+    # Step 4.9: Build the .NET application NesTiler for Windows x64 into the target subfolder
     - name: Build NesTiler for Win-x64
       env:
         SC_OPS: ${{ matrix.sc == 'self-contained' && '--self-contained true -p:PublishTrimmed=False' || '--no-self-contained' }}
       run: dotnet publish tools_sources/NesTiler/NesTiler -c Release -r win-x64 -o ${{ env.NESTILER_DIR }} ${{ env.SC_OPS }}
 
-    # Шаг 4.10: Очистка лишней сопроводительной документации из директорий утилит внутри MSYS2
+    # Step 4.10: Remove unnecessary documentation files from tool directories inside MSYS2
     - name: Remove unnecessary files
       shell: msys2 {0}
       run: rm -f ${{ env.COMBINER_DIR }}/*.md ${{ env.NESTILER_DIR }}/*.md
 
-    # Шаг 4.11: Запуск тестовой компиляции ROM через Make-файл проекта в окружении MSYS2
+    # Step 4.11: Run test ROM compilation via the project Makefile inside MSYS2
     - name: Test build
       shell: msys2 {0}
       run: make -C ${{ env.OUTPUT_DIR }} all
 
-    # Шаг 4.12: Удаление мусорных файлов, оставшихся после проведения теста сборки
+    # Step 4.12: Remove leftover temporary files after the test build
     - name: Clean
       shell: msys2 {0}
       run: make -C ${{ env.OUTPUT_DIR }} clean
 
-    # Шаг 4.13: Упаковка готовой папки проекта со всеми инструментами в .zip архив с максимальным сжатием
+    # Step 4.13: Package the project folder with all tools into a .zip archive with maximum compression
     - name: Archive Windows
       env:
         CMD: zip -r9
@@ -416,7 +418,7 @@ jobs:
       run: |
         ${{ env.CMD }} ${{ env.OUTPUT_FILE }} ${{ env.OUTPUT_DIR }}
 
-    # Шаг 4.14: Передача упакованного zip-архива на страницу релиза GitHub
+    # Step 4.14: Upload the packaged zip archive to the GitHub release page
     - name: Upload Windows
       uses: actions/upload-release-asset@v1
       env:
