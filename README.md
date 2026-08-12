@@ -127,4 +127,4 @@ Games compatibility depends heavily on the game's mapper. The supported mapper l
 
 ## 📥 Download
 
-You can always download the latest version from the [Releases]() section.
+You can always download the latest version from the [Releases](https://github.com/viuhimciuc/coolgirl-multirom-builder-ca65/releases) section.
